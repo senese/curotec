@@ -1,0 +1,1 @@
+# Curotec Python Full Stack Assessment
