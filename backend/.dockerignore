@@ -1,0 +1,6 @@
+*.http
+.dockerignore
+.venv/
+.pytest_cache
+.python-version
+tests/
