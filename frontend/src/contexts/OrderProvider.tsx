@@ -28,7 +28,7 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
 
   async function addOrder(name: string, value: number) {
     setIsLoadingOrder(true)
-    fetch(process.env.ORDERS_URL!, {
+    fetch(process.env.REACT_APP_ORDERS_URL!, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
   }
 
   async function removeOrder(order: IOrder) {
-    fetch(`${process.env.ORDERS_URL!}${order.id}`, {
+    fetch(`${process.env.REACT_APP_ORDERS_URL!}${order.id}`, {
       method: "DELETE",
     })
     .then((res) => {
@@ -84,7 +84,7 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
   }
 
   const getOrders = async () => {
-    const orders = await (await fetch(`${process.env.ORDERS_URL!}`)).json()
+    const orders = await (await fetch(`${process.env.REACT_APP_ORDERS_URL!}`)).json()
     console.log(orders)
     setOrders(orders)
   }
