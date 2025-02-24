@@ -4,6 +4,7 @@ from ..user.user_model import UserModel
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from typing import List
+import bcrypt
 
 
 class UserRepository(BaseRepository):
@@ -13,6 +14,11 @@ class UserRepository(BaseRepository):
     def insert(self, entity: User) -> UserModel:
         user_dict = entity.model_dump(mode="json")
         new_user = UserModel(**user_dict)
+
+        pwd_bytes = entity.password.get_secret_value().encode()
+        salt = bcrypt.gensalt()
+        new_user.password = bcrypt.hashpw(pwd_bytes, salt).decode()
+
         self.session.add(new_user)
         self.session.commit()
         return new_user

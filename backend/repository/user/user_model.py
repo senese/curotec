@@ -12,6 +12,7 @@ class UserModel(Base):
 
     id: Mapped[int] = mapped_column(Integer, unique=True, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(unique=True)
+    password: Mapped[str]
     name: Mapped[str]
     orders: Mapped[List[OrderModel]] = relationship(cascade="all, delete")
     created_at: Mapped[datetime] = mapped_column(
