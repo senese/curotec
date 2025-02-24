@@ -1,5 +1,7 @@
 import { Badge, Col } from "react-bootstrap";
 import IOrder from "./types/order";
+import { startTransition } from "react";
+import { useOrders } from "./contexts/OrderProvider";
 
 interface OrderContainerProps {
   order: IOrder;
@@ -7,6 +9,8 @@ interface OrderContainerProps {
 }
 
 function Order({ order, index }: OrderContainerProps) {
+  const { removeOrder } = useOrders();
+
   return (
     <div className="d-flex flex-row">
       <Col className="order-index flex-shrink-1" xs="1">
@@ -14,11 +18,26 @@ function Order({ order, index }: OrderContainerProps) {
       </Col>
       <Col className="order-name flex-grow-1">{order.name}</Col>
       <Col className="order-value flex-grow-1">$ {order.value}</Col>
-      <Col className="order-edit flex-shrink-1" xs="1">
+      <Col
+        className="order-edit flex-shrink-1"
+        xs="1"
+        style={{ cursor: "pointer" }}
+      >
         <i className="bi bi-pencil"></i>
       </Col>
-      <Col className="order-remove flex-shrink-1" xs="1">
-        <i className="bi bi-trash3"></i>
+      <Col
+        className="order-remove flex-shrink-1"
+        xs="1"
+        style={{ cursor: "pointer" }}
+      >
+        <i
+          className="bi bi-trash3"
+          onClick={(e) => {
+            startTransition(() => {
+              removeOrder(order);
+            });
+          }}
+        ></i>
       </Col>
     </div>
   );
