@@ -12,8 +12,9 @@ class CreateUserController:
     def execute(session: Session, input: BaseModel):
         try:
             user = User(
-                name=input.name,    # type: ignore
-                email=input.email   # type: ignore
+                name=input.name,            # type: ignore
+                email=input.email,          # type: ignore
+                password=input.password     # type: ignore
             )
             repository = UserRepository(session)
             user_model = repository.insert(user)

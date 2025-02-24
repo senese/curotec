@@ -24,6 +24,7 @@ router = APIRouter()
 class CreateUserInput(BaseModel):
     name: str
     email: EmailStr
+    password: str
 
 
 @router.post(
@@ -33,8 +34,7 @@ class CreateUserInput(BaseModel):
     dependencies=[Depends(check_content_type)],
 )
 async def create_user(input: CreateUserInput, session=Depends(get_session)):
-    output = CreateUserController.execute(session, input)
-    return output
+    CreateUserController.execute(session, input)
 
 
 # Read
