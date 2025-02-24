@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
+from httpx import Headers
 from sqlalchemy.exc import NoResultFound
 from pathlib import Path
 import pytest
@@ -88,6 +89,16 @@ def insert_new_user(db: DBConnectionHandler, test_user):
             pass
 
 
+@pytest.fixture
+def token(client: TestClient, test_user):
+    headers = Headers()
+    headers["content-type"] = "application/x-www-form-urlencoded"
+    data = {"username": test_user.email, "password": test_user.password.get_secret_value()}
+    res = client.post("/auth", data=data, headers=headers)
+    json_response = res.json()
+    return json_response["access_token"]
+
+
 @pytest.mark.usefixtures("insert_new_user")
 @pytest.fixture
 def insert_new_order(db: DBConnectionHandler, test_order):
@@ -120,7 +131,7 @@ class TestOrderRouter:
                     assert route.path == "/"
                     assert route.methods == {'GET'}
                 case 'update_order':
-                    assert route.path == "/"
+                    assert route.path == "/{id}"
                     assert route.methods == {'PATCH'}
                 case 'delete_order':
                     assert route.path == "/{id}"
@@ -128,28 +139,31 @@ class TestOrderRouter:
 
 
 class TestCreateOrder:
-    def test_e2e_create_order(self, client: TestClient, insert_new_user, test_order):
+    @pytest.mark.usefixtures("insert_new_user")
+    def test_e2e_create_order(self, client: TestClient, test_order, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
         body = {
             "name": test_order.name,
-            "user_id": insert_new_user.id,
             "value": test_order.value
         }
-        res = client.post("/orders", json=body)
+        res = client.post("/orders", json=body, headers=headers)
         assert res.status_code == 201
         assert res.headers.get("content-type") == "application/json"
 
         json_res: dict = res.json()
         assert_types_of_json_response(json_res)
 
-    def test_request_validation(self, client: TestClient):
+    def test_request_validation(self, client: TestClient, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
         body = {"name": "test"}
-        res = client.post("/orders", json=body)
+        res = client.post("/orders", json=body, headers=headers)
         assert res.status_code == 400
         assert res.json() == {"detail": "Field required"}
 
         body = {
             "name": "Test",
-            "user_id": 1,
             "value": "test"
         }
         res = client.post("/orders", json=body)
@@ -161,8 +175,10 @@ class TestCreateOrder:
 
 class TestGetAllOrders:
     @pytest.mark.usefixtures("insert_new_order")
-    def test_e2e_get_orders(self, client: TestClient, test_order):
-        res = client.get("/orders")
+    def test_e2e_get_orders(self, client: TestClient, test_order, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
+        res = client.get("/orders", headers=headers)
         assert res.status_code == 200
 
         fetched_order = res.json()
@@ -182,12 +198,10 @@ class TestUpdateOrder:
     def test_e2e_update_order(self, client: TestClient, insert_new_order):
         time.sleep(1)       # to ensure different times of creation and update
         body = {
-            "id": insert_new_order.id,
             "name": "NewName",
-            "user_id": 1,
             "value": 500.99
         }
-        res = client.patch("/orders", json=body)
+        res = client.patch(f"/orders{insert_new_order.id}", json=body)
         assert res.status_code == 200
 
         fetched_order = res.json()
@@ -197,11 +211,9 @@ class TestUpdateOrder:
 
     def test_request_validation(self, client: TestClient, insert_new_order):
         body = {
-            "id": insert_new_order.id,
             "name": "NewName",
-            "user_id": 1,
         }
-        res = client.patch("/orders", json=body)
+        res = client.patch(f"/orders{insert_new_order.id}", json=body)
         assert res.status_code == 400
         assert res.json() == {"detail": "Field required"}
 
