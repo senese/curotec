@@ -4,7 +4,7 @@ WORKDIR /src
 ENV PYTHONPATH=/src \
     POETRY_VIRTUALENVS_IN_PROJECT=true
 
-RUN apt update && apt install -y curl
+RUN apt update && apt install -y curl libpq-dev gcc
 RUN pip install --upgrade pip
 
 RUN curl -sSL https://install.python-poetry.org | python3 -
