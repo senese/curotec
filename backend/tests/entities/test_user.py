@@ -6,11 +6,13 @@ import pytest
 def test_user_creation():
     user = User(
         name="User",
-        email="user@email.com"
+        email="user@email.com",
+        password="123456"   # type: ignore
     )
     assert user.id is None
     assert user.name == "User"
     assert user.email == "user@email.com"
+    assert user.password.get_secret_value() == "123456"
 
 
 def test_id_validation():
