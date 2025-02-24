@@ -22,7 +22,8 @@ DB_URL = f"sqlite:///{DB_FILENAME}"
 def test_user():
     return User(
         name="TestUser",
-        email="test@user.com"
+        email="test@user.com",
+        password="Pass123"  # type: ignore
     )
 
 

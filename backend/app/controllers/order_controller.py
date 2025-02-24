@@ -9,11 +9,11 @@ from repository.order.order_repository import OrderRepository
 
 class CreateOrderController:
     @staticmethod
-    def execute(session: Session, input: BaseModel):
+    def execute(session: Session, input: BaseModel, user_id: int):
         try:
             order = Order(
                 name=input.name,        # type: ignore
-                user_id=input.user_id,  # type: ignore
+                user_id=user_id,        # type: ignore
                 value=input.value       # type: ignore
             )
             repository = OrderRepository(session)
@@ -28,10 +28,10 @@ class CreateOrderController:
 
 class GetOrdersController:
     @staticmethod
-    def execute(session: Session):
+    def execute(session: Session, user_id: int):
         repository = OrderRepository(session)
         orders = []
-        for order in repository.find_all():
+        for order in repository.find_all(user_id):
             del order.user_id
             orders.append(order)
         return orders
@@ -39,10 +39,16 @@ class GetOrdersController:
 
 class UpdateOrderController:
     @staticmethod
-    def execute(session: Session, input: Order):
+    def execute(session: Session, id: int, input: BaseModel, user_id: int):
         try:
             repository = OrderRepository(session)
-            output = repository.update(input)
+            order = Order(
+                id=id,                  # type: ignore
+                name=input.name,        # type: ignore
+                user_id=user_id,        # type: ignore
+                value=input.value       # type: ignore
+            )
+            output = repository.update(order)
         except NoResultFound:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -53,10 +59,10 @@ class UpdateOrderController:
 
 class DeleteOrderController:
     @staticmethod
-    def execute(session: Session, id: int):
+    def execute(session: Session, id: int, user_id):
         try:
             repository = OrderRepository(session)
-            order_model = repository.find(id)
+            order_model = repository.find(id, user_id)
             repository.delete(order_model)
         except NoResultFound:   # if doesn't exist, return Ok anyway
             pass

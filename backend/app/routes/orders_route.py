@@ -6,7 +6,7 @@ from fastapi import (
 )
 from pydantic import BaseModel, PositiveFloat
 
-from app.deps.dependencies import check_content_type, get_session
+from app.deps.dependencies import check_content_type, get_session, get_current_user
 from app.controllers.order_controller import (
     CreateOrderController,
     GetOrdersController,
@@ -23,7 +23,6 @@ router = APIRouter()
 
 class CreateOrderInput(BaseModel):
     name: str
-    user_id: PositiveFloat
     value: PositiveFloat
 
 
@@ -33,8 +32,12 @@ class CreateOrderInput(BaseModel):
     response_model=Order,
     dependencies=[Depends(check_content_type)],
 )
-async def create_order(input: CreateOrderInput, session=Depends(get_session)):
-    output = CreateOrderController.execute(session, input)
+async def create_order(
+    input: CreateOrderInput,
+    session=Depends(get_session),
+    user_id=Depends(get_current_user)
+):
+    output = CreateOrderController.execute(session, input, user_id)
     return output
 
 
@@ -43,11 +46,19 @@ async def create_order(input: CreateOrderInput, session=Depends(get_session)):
 @router.get(
     "/",
 )
-async def get_orders(session=Depends(get_session)):
-    orders = GetOrdersController.execute(session)
+async def get_orders(
+    session=Depends(get_session),
+    user_id=Depends(get_current_user)
+):
+    orders = GetOrdersController.execute(session, user_id)
     return orders
 
 # Update
+
+
+class UpdateOrderInput(BaseModel):
+    name: str
+    value: PositiveFloat
 
 
 class UpdateOrderOutput(BaseModel):
@@ -58,11 +69,16 @@ class UpdateOrderOutput(BaseModel):
 
 
 @router.patch(
-    "/",
+    "/{id}",
     response_model=UpdateOrderOutput,
 )
-async def update_order(input: Order, session=Depends(get_session)):
-    output = UpdateOrderController.execute(session, input)
+async def update_order(
+    id: int,
+    input: UpdateOrderInput,
+    session=Depends(get_session),
+    user_id=Depends(get_current_user)
+):
+    output = UpdateOrderController.execute(session, id, input, user_id)
     return output
 
 
@@ -72,6 +88,8 @@ async def update_order(input: Order, session=Depends(get_session)):
     "/{id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_order(id: int, session=Depends(get_session)):
-    output = DeleteOrderController.execute(session, id)
-    return output
+async def delete_order(
+    id: int, session=Depends(get_session),
+    user_id=Depends(get_current_user)
+):
+    DeleteOrderController.execute(session, id, user_id)
