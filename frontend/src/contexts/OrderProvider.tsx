@@ -32,9 +32,9 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`
       },
-      // change user_id
-      body: JSON.stringify({ name: name, user_id: 1, value: value })
+      body: JSON.stringify({ name: name, value: value })
     })
     .then((res) => {
       if (res.ok)
@@ -58,6 +58,9 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
   async function removeOrder(order: IOrder) {
     fetch(`${process.env.REACT_APP_ORDERS_URL!}${order.id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`
+      },
     })
     .then((res) => {
       if (res.ok) {
@@ -84,7 +87,9 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
   }
 
   const getOrders = async () => {
-    const orders = await (await fetch(`${process.env.REACT_APP_ORDERS_URL!}`)).json()
+    const orders = await (await fetch(`${process.env.REACT_APP_ORDERS_URL!}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
+    })).json()
     console.log(orders)
     setOrders(orders)
   }
