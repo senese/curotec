@@ -19,21 +19,21 @@ class OrderRepository(BaseRepository):
         return new_order
 
     def update(self, entity: Order) -> OrderModel:
-        model = self.find(entity.id)    # type: ignore
+        model = self.find(entity.id, entity.user_id)    # type: ignore
         model.name = entity.name
         model.value = entity.value
         self.session.commit()
         return model
 
-    def find(self, id: int) -> OrderModel:
+    def find(self, id: int, user_id: int) -> OrderModel:
         try:
-            order = self.session.query(OrderModel).filter_by(id=id).one()
+            order = self.session.query(OrderModel).filter_by(id=id, user_id=user_id).one()
         except NoResultFound:
             raise NoResultFound("Order not found")
         return order
 
-    def find_all(self) -> List[OrderModel]:
-        return self.session.query(OrderModel).all()
+    def find_all(self, user_id) -> List[OrderModel]:
+        return self.session.query(OrderModel).filter_by(user_id=user_id).all()
 
     def delete(self, model: OrderModel) -> None:
         self.session.delete(model)

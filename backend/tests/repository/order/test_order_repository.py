@@ -102,7 +102,7 @@ def test_find_order(order_test, db_session):
 
     # SQL Alchemy return naive UTC datetime objects
     dt = datetime.utcnow().replace(microsecond=0)
-    found_order = order_repository.find(order_test.id)
+    found_order = order_repository.find(order_test.id, order_test.user_id)
 
     assert_model_attributes(found_order)
     assert_values_against_entity(found_order, order_test, dt)
@@ -113,7 +113,7 @@ def test_find_unexistent_order(db_session):
     not_found_regex = "Order not found"
 
     with pytest.raises(NoResultFound, match=not_found_regex):
-        order_repository.find(-1)
+        order_repository.find(-1, 1)
 
 
 def test_find_all_orders(order_test, db_session):
@@ -136,11 +136,43 @@ def test_find_all_orders(order_test, db_session):
     # SQL Alchemy return naive UTC datetime objects
     dt2 = datetime.utcnow().replace(microsecond=0)
 
-    orders = order_repository.find_all()
+    orders = order_repository.find_all(user_id=1)
     assert type(orders) is list
     assert_model_attributes(orders[0])
     assert_values_against_entity(orders[0], order_test, dt1)
     assert_values_against_entity(orders[1], order_test2, dt2)
+
+
+def test_find_all_orders_from_different_users(order_test, db_session):
+    order_repository = OrderRepository(db_session)
+    order_model = order_repository.insert(order_test)
+    order_test.id = order_model.id
+
+    # SQL Alchemy return naive UTC datetime objects
+    dt1 = datetime.utcnow().replace(microsecond=0)
+
+    # SQL Alchemy return naive UTC datetime objects
+    orders = order_repository.find_all(user_id=1)
+    assert type(orders) is list
+    assert len(orders) == 1
+    assert_model_attributes(orders[0])
+    assert_values_against_entity(orders[0], order_test, dt1)
+
+    order_test2 = Order(
+        name="Order2",
+        user_id=2,
+        value=300
+    )
+
+    order_model2 = order_repository.insert(order_test2)
+    order_test2.id = order_model2.id
+    dt2 = datetime.utcnow().replace(microsecond=0)
+
+    orders2 = order_repository.find_all(user_id=2)
+    assert type(orders2) is list
+    assert len(orders2) == 1
+    assert_model_attributes(orders2[0])
+    assert_values_against_entity(orders2[0], order_test2, dt2)
 
 
 def test_delete_order(order_test, db_session):
@@ -153,7 +185,7 @@ def test_delete_order(order_test, db_session):
 
     not_found_regex = "Order not found"
     with pytest.raises(NoResultFound, match=not_found_regex):
-        order_repository.find(order_test.id)
+        order_repository.find(order_test.id, order_test.user_id)
 
 
 def test_deletion_cascade(db_session):
@@ -175,5 +207,5 @@ def test_deletion_cascade(db_session):
 
     db_session.delete(user)
     order_repository = OrderRepository(db_session)
-    orders = order_repository.find_all()
+    orders = order_repository.find_all(user_id=user.id)
     assert orders == []
