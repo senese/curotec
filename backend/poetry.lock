@@ -722,8 +722,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.6.3)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11.11"
-<<<<<<< HEAD
 content-hash = "c08b4cd64c70c101b8621aaf1db16ae6c6da5550703e25d9b888231f70d3e34c"
-=======
-content-hash = "480f016634d64f7cfad1e63f0f98267a26806a9261099f6aa617e7e127941a92"
->>>>>>> a258608 (build: :construction_worker: add postgresql dependencies)
