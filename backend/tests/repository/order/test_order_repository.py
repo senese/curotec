@@ -13,7 +13,8 @@ import time
 def inserted_user(db_session):
     user = UserModel(
         name="User1",
-        email="teste@email.com"
+        email="teste@email.com",
+        password="qwerty"
     )
     db_session.add(user)
     db_session.commit()
@@ -158,7 +159,8 @@ def test_delete_order(order_test, db_session):
 def test_deletion_cascade(db_session):
     user = UserModel(
         name="User1",
-        email="teste@email.com"
+        email="teste@email.com",
+        password="qwerty"
     )
     db_session.add(user)
     db_session.commit()

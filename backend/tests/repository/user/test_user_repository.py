@@ -5,6 +5,7 @@ from sqlalchemy.orm import InstanceState
 from sqlalchemy.exc import NoResultFound
 from datetime import datetime
 import pytest
+import bcrypt
 import time
 
 
@@ -12,7 +13,8 @@ import time
 def user_test():
     return User(
         name="TestUser",
-        email="test@user.com"
+        email="test@user.com",
+        password="12345"    # type: ignore
     )
 
 
@@ -21,6 +23,7 @@ def assert_model_attributes(model: UserModel):
         "id": int,
         "name": str,
         "email": str,
+        "password": str,
         "created_at": datetime,
         "updated_at": datetime,
         "_sa_instance_state": InstanceState
@@ -35,7 +38,12 @@ def assert_model_attributes(model: UserModel):
 def assert_against_entity(model: UserModel, entity: User, dt: datetime):
     entity_dict = entity.model_dump(mode="json")
     for key in entity_dict.keys():
-        assert model.__dict__[key] == entity_dict[key]
+        if key == "password":
+            pwd = entity_dict[key].encode()
+            hashed = model.__dict__[key].encode()
+            assert bcrypt.checkpw(pwd, hashed)
+        else:
+            assert model.__dict__[key] == entity_dict[key]
     assert model.created_at == dt
     assert model.updated_at == dt
 
@@ -105,6 +113,7 @@ def test_find_all_users(user_test, db_session):
     user_test2 = User(
         name="User2",
         email="user2@gmail.com",
+        password="123456"   # type: ignore
     )
     user_model2 = user_repository.insert(user_test2)
     user_test2.id = user_model2.id
