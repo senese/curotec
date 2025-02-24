@@ -1,0 +1,27 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "Frontend application for Curotec assessment",
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint",
+    "check": "tsc --noEmit"
+  },
+  "author": "Diego Senese",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.9",
+    "react-dom": "^18.3.1",
+    "react-router": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "parcel": "^2.13.3",
+    "process": "^0.11.10",
+    "typescript": "^5.7.3"
+  }
+}
