@@ -2,7 +2,9 @@ from typing import Any, Dict
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import NoResultFound
+from httpx import Headers
 from pathlib import Path
+import bcrypt
 import pytest
 import time
 import os
@@ -21,7 +23,8 @@ DB_URL = f"sqlite:///{DB_FILENAME}"
 def test_user():
     return User(
         name="TestUser",
-        email="test@user.com"
+        email="test@user.com",
+        password="Pass123"  # type: ignore
     )
 
 
@@ -50,6 +53,7 @@ def assert_types_of_json_response(response: Dict[str, Any]):
         "id": int,
         "name": str,
         "email": str,
+        "password": str,
     }
     print(response)
     assert response.keys() == expected_attrs.keys()
@@ -62,6 +66,9 @@ def assert_types_of_json_response(response: Dict[str, Any]):
 def insert_new_user(db: DBConnectionHandler, test_user):
     json_user = test_user.model_dump(mode="json")
     model_instance = UserModel(**json_user)
+    salt = bcrypt.gensalt()
+    hash_pw = bcrypt.hashpw(json_user["password"].encode(), salt).decode()
+    model_instance.password = hash_pw
     with db as db:
         db.session.add(model_instance)
         db.session.commit()
@@ -76,6 +83,16 @@ def insert_new_user(db: DBConnectionHandler, test_user):
             pass
 
 
+@pytest.fixture
+def token(client: TestClient, test_user):
+    headers = Headers()
+    headers["content-type"] = "application/x-www-form-urlencoded"
+    data = {"username": test_user.email, "password": test_user.password.get_secret_value()}
+    res = client.post("/auth", data=data, headers=headers)
+    json_response = res.json()
+    return json_response["access_token"]
+
+
 class TestUserRouter:
     def test_user_router(self):
         route: APIRoute
@@ -86,13 +103,13 @@ class TestUserRouter:
                     assert route.path == "/"
                     assert route.methods == {'POST'}
                 case 'get_user':
-                    assert route.path == "/{user_email}"
+                    assert route.path == "/me"
                     assert route.methods == {'GET'}
                 case 'update_user':
                     assert route.path == "/"
                     assert route.methods == {'PATCH'}
                 case 'delete_user':
-                    assert route.path == "/{user_email}"
+                    assert route.path == "/"
                     assert route.methods == {'DELETE'}
 
 
@@ -100,23 +117,23 @@ class TestCreateUser:
     def test_e2e_create_user(self, client: TestClient, test_user):
         body = {
             "name": test_user.name,
-            "email": test_user.email
+            "email": test_user.email,
+            "password": test_user.password.get_secret_value()
         }
         res = client.post("/users", json=body)
         assert res.status_code == 201
         assert res.headers.get("content-type") == "application/json"
 
-        json_res: dict = res.json()
-        assert_types_of_json_response(json_res)
-
     @pytest.mark.usefixtures("insert_new_user")  # use fixture without inputting as parameter
     def test_e2e_post_already_created_user(self, client: TestClient, test_user):
         body = {
             "name": test_user.name,
-            "email": test_user.email
+            "email": test_user.email,
+            "password": test_user.password.get_secret_value()
         }
         res = client.post("/users", json=body)
         assert res.status_code == 200
+        assert res.json() == {"detail": f"{test_user.email} already exists"}
 
     def test_request_validation(self, client: TestClient):
         body = {"email": "test@email.com"}
@@ -137,8 +154,10 @@ class TestCreateUser:
 
 class TestGetUser:
     @pytest.mark.usefixtures("insert_new_user")
-    def test_e2e_get_user(self, client: TestClient, test_user):
-        res = client.get(f"/users/{test_user.email}")
+    def test_e2e_get_user(self, client: TestClient, test_user, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
+        res = client.get("/users/me", headers=headers)
         assert res.status_code == 200
 
         fetched_user = res.json()
@@ -147,21 +166,17 @@ class TestGetUser:
         assert "created_at" in fetched_user
         assert "updated_at" in fetched_user
 
-    def test_request_validation(self, client: TestClient):
-        res = client.get("/users/123")
-        assert res.status_code == 404
-        assert res.json() == {"detail": "User not found"}
-
 
 class TestUpdateUser:
     @pytest.mark.usefixtures("insert_new_user")
-    def test_e2e_update_user(self, client: TestClient, test_user):
+    def test_e2e_update_user(self, client: TestClient, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
         time.sleep(1)       # to ensure different times of creation and update
         body = {
             "name": "NewName",
-            "email": test_user.email
         }
-        res = client.patch("/users", json=body)
+        res = client.patch("/users", json=body, headers=headers)
         assert res.status_code == 200
 
         fetched_user = res.json()
@@ -174,19 +189,11 @@ class TestUpdateUser:
         assert res.status_code == 400
         assert res.json() == {"detail": "Field required"}
 
-        body = {
-            "name": "Test",
-            "email": "test"
-        }
-        res = client.post("/users", json=body)
-        assert res.status_code == 400
-        assert res.json() == {
-            "detail": "value is not a valid email address: An email address must have an @-sign."
-        }
-
 
 class TestDeleteUser:
     @pytest.mark.usefixtures("insert_new_user")
-    def test_e2e_delete_user(self, client: TestClient, test_user):
-        res = client.delete(f"/users/{test_user.email}")
+    def test_e2e_delete_user(self, client: TestClient, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
+        res = client.delete("/users/", headers=headers)
         assert res.status_code == 204
