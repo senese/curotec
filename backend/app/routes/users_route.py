@@ -6,14 +6,13 @@ from fastapi import (
 )
 from pydantic import BaseModel, EmailStr
 
-from app.deps.dependencies import check_content_type, get_session
+from app.deps.dependencies import check_content_type, get_current_user, get_session
 from app.controllers.user_controller import (
     CreateUserController,
     GetUserController,
-    UpdateUserController,
     DeleteUserController,
+    UpdateUserNameController,
 )
-from entities.entities import User
 
 
 router = APIRouter()
@@ -30,7 +29,6 @@ class CreateUserInput(BaseModel):
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=User,
     dependencies=[Depends(check_content_type)],
 )
 async def create_user(input: CreateUserInput, session=Depends(get_session)):
@@ -48,23 +46,30 @@ class GetOrUpdateUserOutput(BaseModel):
 
 
 @router.get(
-    "/{user_email}",
+    "/me",
     response_model=GetOrUpdateUserOutput,
 )
-async def get_user(user_email: str, session=Depends(get_session)):
-    output = GetUserController.execute(session, user_email)
+async def get_user(user_id=Depends(get_current_user), session=Depends(get_session)):
+    output = GetUserController.execute(session, user_id)
     return output
 
 
 # Update
+
+class UpdateUserInput(BaseModel):
+    name: str
 
 
 @router.patch(
     "/",
     response_model=GetOrUpdateUserOutput,
 )
-async def update_user(input: User, session=Depends(get_session)):
-    output = UpdateUserController.execute(session, input)
+async def update_user(
+    input: UpdateUserInput,
+    user_id=Depends(get_current_user),
+    session=Depends(get_session)
+):
+    output = UpdateUserNameController.execute(session, input.name, user_id)
     return output
 
 
@@ -72,9 +77,8 @@ async def update_user(input: User, session=Depends(get_session)):
 
 
 @router.delete(
-    "/{user_email}",
+    "/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_user(user_email: str, session=Depends(get_session)):
-    output = DeleteUserController.execute(session, user_email)
-    return output
+async def delete_user(user_id=Depends(get_current_user), session=Depends(get_session)):
+    DeleteUserController.execute(session, user_id)
