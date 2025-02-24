@@ -12,12 +12,14 @@
   "author": "Diego Senese",
   "license": "ISC",
   "dependencies": {
+    "@formkit/auto-animate": "^0.8.2",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^18.3.1",
     "react-router": "^7.2.0"
   },
   "devDependencies": {
+    "@types/node": "^22.13.5",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "parcel": "^2.13.3",
