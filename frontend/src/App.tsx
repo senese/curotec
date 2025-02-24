@@ -1,17 +1,23 @@
 import { BrowserRouter, Routes, Route } from "react-router";
 import { OrdersProvider } from "./contexts/OrderProvider";
+import { PrivateRoute } from "./PrivateRoute";
+import { AuthProvider } from "./contexts/AuthProvider";
 import MainPage from "./MainPage";
+import LoginPage from "./LoginPage";
 
 function App() {
   return (
     <>
-      <BrowserRouter>
+      <AuthProvider>
         <OrdersProvider>
-          <Routes>
-            <Route path="/" element={<MainPage />}></Route>
-          </Routes>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<PrivateRoute><MainPage /></PrivateRoute>}/>
+              <Route path="/auth" element={<LoginPage/>}/>
+            </Routes>
+          </BrowserRouter>
         </OrdersProvider>
-      </BrowserRouter>
+      </AuthProvider>
     </>
   );
 }
