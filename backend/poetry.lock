@@ -793,7 +793,6 @@ files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
 ]
-markers = {dev = "python_version < \"3.13\""}
 
 [[package]]
 name = "uvicorn"
@@ -816,5 +815,5 @@ standard = ["colorama (>=0.4)", "httptools (>=0.6.3)", "python-dotenv (>=0.13)",
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11.11"
-content-hash = "1cd27a1b42d68e34ee7a73ae50e6ac8890b7da0dd609cc293140fbf7fb8c1893"
+python-versions = "~=3.11.11"
+content-hash = "482cea54a56273dda0be0f584bc150d749f709e91a95087d095b62e86c1528b8"
