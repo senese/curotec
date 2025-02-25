@@ -2,6 +2,7 @@ export default interface IOrder {
   id: string;
   name: string;
   value: number;
+  user_id?: number;
 };
 
 export default class Order implements IOrder {
@@ -9,5 +10,6 @@ export default class Order implements IOrder {
       this.id = order.id
       this.name = order.name
       this.value = order.value
+      this.user_id = order.user_id
   }
 }

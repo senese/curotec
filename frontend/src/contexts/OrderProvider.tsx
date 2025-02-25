@@ -46,8 +46,8 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
         console.error('Invalid information');
         return;
       }
-      
-      setOrders([json, ...orders])
+      delete json.user_id
+      setOrders([...orders, json])
       setIsLoadingOrder(false)
     })
     .catch(function (error) {
@@ -80,7 +80,7 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
       'id' in order &&
       'name' in order &&
       'value' in order &&
-      typeof (order as IOrder).id === 'string' &&
+      typeof (order as IOrder).id === 'number' &&
       typeof (order as IOrder).name === 'string' &&
       typeof (order as IOrder).value === 'number'
     );
