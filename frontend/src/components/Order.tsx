@@ -1,9 +1,9 @@
 import { Badge, Col } from "react-bootstrap";
-import IOrder from "./types/order";
+import IOrder from "../types/order";
 import { startTransition, useState } from "react";
-import { useOrders } from "./contexts/OrderProvider";
-import "./styles/order.css";
-import EditModal from "./components/EditModal";
+import { useOrders } from "../contexts/OrderProvider";
+import "../styles/order.css";
+import EditModal from "./EditModal";
 
 interface OrderContainerProps {
   order: IOrder;

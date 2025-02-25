@@ -1,8 +1,8 @@
-import { Button, Container, Form, ListGroup, ListGroupItem, Modal, Row } from "react-bootstrap";
+import { Button, Container, ListGroup, ListGroupItem } from "react-bootstrap";
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { useEffect, useState } from "react";
-import OrderForm from "./OrderForm";
-import Order from "./Order";
+import { useEffect } from "react";
+import OrderForm from "./components/OrderForm";
+import Order from "./components/Order";
 import { useOrders } from "./contexts/OrderProvider";
 import { useAuth } from "./contexts/AuthProvider";
 
