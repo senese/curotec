@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ name: name, email: email, password: password })
       })
     } catch (error) {
-      console.error("Failed to register:", error);
+      throw Error("Failed to register")
     }
   };
 

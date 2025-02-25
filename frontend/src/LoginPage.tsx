@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Form, Container, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate } from 'react-router';
 import { useAuth } from "./contexts/AuthProvider";
+import toast, { Toaster } from 'react-hot-toast';
 
 function LoginPage() {
   const [name, setName] = useState("");
@@ -33,9 +34,16 @@ function LoginPage() {
   const handleCreateAccount = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await createUser(name, email, password)
-    setLoading(false);
-    setIsCreating(false)
+    try {
+      await createUser(name, email, password)
+      toast.success("User successfully registered!")
+    } catch (error) {
+      console.log(error)
+      toast.error("Something went wrong")
+    } finally {
+      setLoading(false);
+      setIsCreating(false)
+    }
   };
 
   const handleShowForm = (creating = false) => {
@@ -47,6 +55,7 @@ function LoginPage() {
 
   return (
     <div className="login-wrapper">
+      <div><Toaster/></div>
       <Container className="d-flex flex-column justify-content-center align-items-center h-100">
       <Row className="w-100">
         <h2 id="title" className="title text-center pt-2">{ welcomeMessage }</h2>
