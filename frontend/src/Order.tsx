@@ -11,6 +11,17 @@ interface OrderContainerProps {
 
 function Order({ order, index }: OrderContainerProps) {
   const { removeOrder } = useOrders();
+  const handleShow = () => setShowModal(true);
+
+  function formatPrice(price: number) {
+    if (typeof price === "number") {
+      return price.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+      });
+    }
+  }
 
   return (
     <div className="d-flex flex-row">
@@ -18,7 +29,7 @@ function Order({ order, index }: OrderContainerProps) {
         <Badge bg="secondary">{index}</Badge>
       </Col>
       <Col className="order-name flex-grow-1">{order.name}</Col>
-      <Col className="order-value flex-grow-1">$ {order.value}</Col>
+        <Col className="order-value flex-grow-1">{formatPrice(order.value)}</Col>
       <Col
         className="order-edit flex-shrink-1"
         xs="1"

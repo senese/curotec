@@ -1,6 +1,6 @@
-import { Button, Container, ListGroup, Row } from "react-bootstrap";
+import { Button, Container, Form, ListGroup, ListGroupItem, Modal, Row } from "react-bootstrap";
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import OrderForm from "./OrderForm";
 import Order from "./Order";
 import { useOrders } from "./contexts/OrderProvider";
@@ -37,11 +37,12 @@ function MainPage() {
           <ListGroup ref={listGroup} className="list-group-flush">
           { (orders) && 
             orders?.map((order, index) =>
-              <Order
-                key={order.id}
-                order={order}
-                index={index+1}
-              />
+              <ListGroupItem key={order.id}>
+                <Order
+                  order={order}
+                  index={index+1}
+                />
+              </ListGroupItem>
             )
           }
           </ListGroup>
