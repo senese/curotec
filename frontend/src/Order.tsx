@@ -2,6 +2,7 @@ import { Badge, Col } from "react-bootstrap";
 import IOrder from "./types/order";
 import { startTransition } from "react";
 import { useOrders } from "./contexts/OrderProvider";
+import "./styles/order.css"
 
 interface OrderContainerProps {
   order: IOrder;
