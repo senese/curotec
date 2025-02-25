@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from httpx import Headers
 from sqlalchemy.exc import NoResultFound
 from pathlib import Path
+import bcrypt
 import pytest
 import time
 import os
@@ -75,6 +76,9 @@ def assert_types_of_json_response(response: Dict[str, Any]):
 def insert_new_user(db: DBConnectionHandler, test_user):
     json_user = test_user.model_dump(mode="json")
     model_instance = UserModel(**json_user)
+    salt = bcrypt.gensalt()
+    hash_pw = bcrypt.hashpw(json_user["password"].encode(), salt).decode()
+    model_instance.password = hash_pw
     with db as db:
         db.session.add(model_instance)
         db.session.commit()
@@ -96,21 +100,28 @@ def token(client: TestClient, test_user):
     data = {"username": test_user.email, "password": test_user.password.get_secret_value()}
     res = client.post("/auth", data=data, headers=headers)
     json_response = res.json()
+    print(json_response)
     return json_response["access_token"]
 
 
-@pytest.mark.usefixtures("insert_new_user")
 @pytest.fixture
-def insert_new_order(db: DBConnectionHandler, test_order):
+def insert_new_order(db: DBConnectionHandler, test_user, test_order):
+    json_user = test_user.model_dump(mode="json")
+    user_model = UserModel(**json_user)
+    salt = bcrypt.gensalt()
+    hash_pw = bcrypt.hashpw(json_user["password"].encode(), salt).decode()
+    user_model.password = hash_pw
+
     json_order = test_order.model_dump(mode="json")
-    model_instance = OrderModel(**json_order)
+    order_model = OrderModel(**json_order)
     with db as db:
-        db.session.add(model_instance)
+        db.session.add(user_model)
+        db.session.add(order_model)
         db.session.commit()
-        yield model_instance
+        yield order_model
         # teardown test
         try:
-            order_model = db.session.query(OrderModel).filter(OrderModel.id == model_instance.id).one()
+            order_model = db.session.query(OrderModel).filter(OrderModel.id == order_model.id).one()
             db.session.delete(order_model)
             db.session.commit()
             print(f"Order {order_model.id} deleted")
@@ -154,6 +165,7 @@ class TestCreateOrder:
         json_res: dict = res.json()
         assert_types_of_json_response(json_res)
 
+    @pytest.mark.usefixtures("insert_new_user")
     def test_request_validation(self, client: TestClient, token):
         headers = Headers()
         headers["authorization"] = f"Bearer {token}"
@@ -166,7 +178,7 @@ class TestCreateOrder:
             "name": "Test",
             "value": "test"
         }
-        res = client.post("/orders", json=body)
+        res = client.post("/orders", json=body, headers=headers)
         assert res.status_code == 400
         assert res.json() == {
             "detail": "Input should be a valid number, unable to parse string as a number"
@@ -195,13 +207,15 @@ class TestGetAllOrders:
 
 
 class TestUpdateOrder:
-    def test_e2e_update_order(self, client: TestClient, insert_new_order):
+    def test_e2e_update_order(self, client: TestClient, insert_new_order, token):
         time.sleep(1)       # to ensure different times of creation and update
         body = {
             "name": "NewName",
             "value": 500.99
         }
-        res = client.patch(f"/orders{insert_new_order.id}", json=body)
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
+        res = client.patch(f"/orders/{insert_new_order.id}", json=body, headers=headers)
         assert res.status_code == 200
 
         fetched_order = res.json()
@@ -209,21 +223,22 @@ class TestUpdateOrder:
         assert fetched_order["value"] == body["value"]
         assert fetched_order["created_at"] != fetched_order["updated_at"]
 
-    def test_request_validation(self, client: TestClient, insert_new_order):
+    def test_request_validation(self, client: TestClient, insert_new_order, token):
         body = {
             "name": "NewName",
         }
-        res = client.patch(f"/orders{insert_new_order.id}", json=body)
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
+        res = client.patch(f"/orders/{insert_new_order.id}", json=body, headers=headers)
         assert res.status_code == 400
         assert res.json() == {"detail": "Field required"}
 
         body = {
             "id": insert_new_order.id,
             "name": "Test",
-            "user_id": 1,
             "value": "test"
         }
-        res = client.patch("/orders", json=body)
+        res = client.patch(f"/orders/{insert_new_order.id}", json=body, headers=headers)
         assert res.status_code == 400
         assert res.json() == {
             "detail": "Input should be a valid number, unable to parse string as a number"
@@ -231,6 +246,8 @@ class TestUpdateOrder:
 
 
 class TestDeleteOrder:
-    def test_e2e_delete_order(self, client: TestClient, insert_new_order):
-        res = client.delete(f"/orders/{insert_new_order.id}")
+    def test_e2e_delete_order(self, client: TestClient, insert_new_order, token):
+        headers = Headers()
+        headers["authorization"] = f"Bearer {token}"
+        res = client.delete(f"/orders/{insert_new_order.id}", headers=headers)
         assert res.status_code == 204
