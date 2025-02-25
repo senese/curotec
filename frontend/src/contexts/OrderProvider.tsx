@@ -5,6 +5,7 @@ import React, {
   useContext,
 } from "react";
 import IOrder from "../types/order";
+import { userInfo } from "os";
 
 
 interface OrdersProviderProps {
@@ -17,6 +18,7 @@ interface IOrdersContext {
   addOrder(name: string, value: number): void;
   getOrders(): void;
   removeOrder(order: IOrder): void;
+  updateOrder(order_id: number, name: string, value: number): void;
 }
 
 const OrdersContext = createContext<IOrdersContext | undefined>(undefined);
@@ -73,6 +75,29 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
     });
   }
 
+  async function updateOrder(order_id: number, name: string, value: number) {
+    const response = await fetch(`${process.env.REACT_APP_ORDERS_URL!}${order_id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`
+      },
+      body: JSON.stringify({ name: name, value: value })
+    })
+    if (response.ok) {
+      const updatedOrders = orders.map(old_order => {
+        if (old_order.id == order_id) {
+          return {...old_order, name: name, value: value}
+        }
+        else {
+          old_order
+        }
+      })
+      console.log(updatedOrders)
+      setOrders(updatedOrders)
+    }
+  }
+
   function isValidOrder(order: unknown): order is IOrder {
     return (
       typeof order === 'object' &&
@@ -90,12 +115,11 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
     const orders = await (await fetch(`${process.env.REACT_APP_ORDERS_URL!}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
     })).json()
-    console.log(orders)
     setOrders(orders)
   }
 
   return (
-    <OrdersContext.Provider value={{ orders, isLoadingOrder, addOrder, getOrders, removeOrder }}>
+    <OrdersContext.Provider value={{ orders, isLoadingOrder, addOrder, getOrders, removeOrder, updateOrder }}>
       {children}
     </OrdersContext.Provider>
   );
